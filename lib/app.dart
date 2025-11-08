@@ -85,14 +85,9 @@ class _AcademiaState extends State<Academia> {
           )..add(GetCachedProfileEvent()),
         ),
         BlocProvider(
-          create: (context) => TodoBloc(
-            getCachedTodosUsecase: sl.get<GetCachedTodosUsecase>(),
-            refreshTodosUsecase: sl<RefreshTodosUsecase>(),
-            createTodoUsecase: sl<CreateTodoUsecase>(),
-            updateTodoUsecase: sl<UpdateTodoUsecase>(),
-            completeTodoUsecase: sl.get<CompleteTodoUsecase>(),
-            deleteTodoUsecase: sl<DeleteTodoUsecase>(),
-          )..add(FetchCachedTodosEvent()),
+          create: (context) => sl<TodoBloc>()
+            ..add(FetchCachedTodosEvent())
+            ..add(SyncTodosWithGoogleCalendar()),
         ),
 
         BlocProvider(create: (context) => sl<CommunityListingCubit>()),
@@ -109,6 +104,15 @@ class _AcademiaState extends State<Academia> {
         ),
         BlocProvider(
           create: (context) => sl<NotificationBloc>()
+            ..add(
+              InitializeLocalNotificationEvent(
+                channels: [
+                  NotificationChannelConfig.reminders,
+                  NotificationChannelConfig.alerts,
+                  NotificationChannelConfig.updates,
+                ],
+              ),
+            )
             ..add(
               InitializeOneSignalEvent(
                 appId: "88ca0bb7-c0d7-4e36-b9e6-ea0e29213593",
@@ -141,10 +145,7 @@ class _AcademiaState extends State<Academia> {
             BlocListener<NotificationBloc, NotificationState>(
               listener: (context, state) {
                 if (state is NotificationErrorState) {
-                  _logger.e(
-                    'OneSignal initialization failed: ${state.message}',
-                    error: state.message,
-                  );
+                  _logger.e(state.message);
                 }
               },
             ),
